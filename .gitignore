@@ -4,3 +4,9 @@
 *.jar
 *.war
 *.ear
+
+# NetBeans and MacOSX
+nbproject
+._.DS_Store
+._.DS_Store*
+*DS_Store*
