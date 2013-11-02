@@ -9,7 +9,7 @@ import csv2qr.model.CSV2QR;
  * <h2>TODO</h2>
  * <ul>
  *  <li>Factory to allow QR generator (Google Chart, ZXing) </li>
- *  <li>Factory to allow vCard version</li>
+ *  <li>Factory to allow QR types (vCard, URL, ...)</li>
  *  <li>Put common companies details in another CSV (pseudo relational)</li>
  *  <li></li>
  *  <li>GUI</li>
@@ -29,6 +29,7 @@ public class Main {
    * @param args the command line arguments
    */
   public static void main(String[] args) {
+    
     
     CSV2QR csv2qr = new CSV2QR();
     csv2qr.csvConvert();

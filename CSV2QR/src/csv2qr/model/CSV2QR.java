@@ -24,6 +24,7 @@ import csv2qr.tools.Texturize;
  * ReadCSV
  * First working version
  * TODO : Clear MVC separation, Factories, ...
+ * TODO : Remove multilingual options 
  * @author r-daneelolivaw
  */
 public class CSV2QR {
@@ -37,11 +38,13 @@ public class CSV2QR {
   private static boolean IS_TEST = false;
   
   // CSV FILE
+  // Modify file path
+  public static String QR_DIRECTORY_PATH =  "/Users/christophe/Sites/csv2qr/CSV2QR/files";
+  
   public static String CSV_FILE_PATH_ORIG =  "addresses.csv";
   public static String CSV_FILE_PATH_DEST =  "addresses_with_qr.csv";
   public static String CSV_FILE_PATH_ORIG_TEST =  "addresses_test.csv";
   public static String CSV_FILE_PATH_DEST_TEST =  "addresses_test_with_qr.csv";
-  public static String QR_DIRECTORY_PATH =  "/Users/christophe/Desktop/CSV2QR/files/";
   
   // Common company details (default)
   private String COM_STREET = "Street name, 123";
@@ -96,8 +99,6 @@ public class CSV2QR {
     String website = workLine[0];
     
    */
-    
-  
   
   public CSV2QR(){
   }
@@ -107,13 +108,11 @@ public class CSV2QR {
       csvToList();
   }
   
-  
   /**
    * Read a CSV and put it in a List of String arrays (one array per workLine)
    * @return 
    */
   private List csvToList() {
-    
     
     String inputCSV = null;
     String outputCSV = null;
@@ -126,7 +125,6 @@ public class CSV2QR {
       outputCSV = CSV_FILE_PATH_DEST;
     }
     
-
     List csvEntries = null;
 
     try {
@@ -151,81 +149,79 @@ public class CSV2QR {
       // open the new CSV
       CSVWriter writer = null;
       try {
+          
         writer = new CSVWriter(new FileWriter(outputCSV), ',');
+        
+        while (it.hasNext()) {
+        
+            // create list to add the future column
+            List<String> workLine = new ArrayList<String>();
+
+            // used to handle duplicate file names
+            ++curIndex;
+
+            // store in a first array the original line
+            String[] origLine = (String[]) it.next();
+
+            // add workLine components to the array list
+            for(int c=0; c < origLine.length; ++c){
+              System.out.print(origLine[c] + "\t");
+              workLine.add(origLine[c]);
+            }
+
+            System.out.println("\n");
+
+            // filename = first+lastname
+            String qrFileName = origLine[CSV_FNAME] + "_" +  origLine[CSV_LNAME];
+            String cleanQRFileName = Texturize.removeAccents(qrFileName);
+            cleanQRFileName = Texturize.removeSpaces(cleanQRFileName);
+            String qrPath = "/qr/" + cleanQRFileName + ".png";
+
+            // if already in the list (manage duplicate names)
+            if(qrFiles.contains(qrPath)){
+              // rebuild filename and increment with workline index
+              qrPath = "/qr/" + cleanQRFileName + "_" + curIndex +  ".png";
+            }
+
+            System.out.println("Filename = " + qrPath);
+
+            // append the QR filename to the verification list
+            qrFiles.add(qrPath);
+            // append the QR filename to the current workLine
+            workLine.add(qrPath);
+
+            // convert into array
+            String[] newLine = new String[workLine.size()];
+            workLine.toArray(newLine);
+
+            // create vCard workLine
+            String vCardLine = constructVCardStringFromLine(newLine);
+            System.out.println(vCardLine);
+
+            // download and write the QR (comment for tests...)
+            GoogleChartImageDownload.downloadQR(vCardLine, QR_DIRECTORY_PATH, qrPath);
+
+            // write each entry on the new CSV
+            writer.writeNext(newLine);
+
+            // DEBUG
+            /*
+            for( int i = 0; i < workLine.length - 1; i++){
+              String element = workLine[i];
+              System.out.print("\t" + element);
+            }
+            System.out.println("");
+            */
+
+          }
+      
+          writer.close();
+        
       } catch (IOException ex) {
         Logger.getLogger(CSV2QR.class.getName()).log(Level.SEVERE, null, ex);
       }
       
-      while (it.hasNext()) {
-        
-        // create list to add the future column
-        List<String> workLine = new ArrayList<String>();
-        
-        // used to handle duplicate file names
-        ++curIndex;
-        
-        // store in a first array the original line
-        String[] origLine = (String[]) it.next();
-        
-        // add workLine components to the array list
-        for(int c=0; c < origLine.length; ++c){
-          System.out.print(origLine[c] + "\t");
-          workLine.add(origLine[c]);
-        }
-        
-        System.out.println("\n");
-        
-        // filename = first+lastname
-        String qrFileName = origLine[CSV_FNAME] + "_" +  origLine[CSV_LNAME];
-        String cleanQRFileName = Texturize.removeAccents(qrFileName);
-        cleanQRFileName = Texturize.removeSpaces(cleanQRFileName);
-        String qrPath = "/qr/" + cleanQRFileName + ".png";
-       
-        // if already in the list (manage duplicate names)
-        if(qrFiles.contains(qrPath)){
-          // rebuild filename and increment with workline index
-          qrPath = "/qr/" + cleanQRFileName + "_" + curIndex +  ".png";
-        }
-        
-        System.out.println("Filename = " + qrPath);
-        
-        // append the QR filename to the verification list
-        qrFiles.add(qrPath);
-        // append the QR filename to the current workLine
-        workLine.add(qrPath);
-        
-        
-        // convert into array
-        String[] newLine = new String[workLine.size()];
-        workLine.toArray(newLine);
-        
-        // create vCard workLine
-        String vCardLine = constructVCardStringFromLine(newLine);
-        System.out.println(vCardLine);
-        
-        // download and write the QR (comment for tests...)
-        GoogleChartImageDownload.downloadQR(vCardLine, QR_DIRECTORY_PATH, qrPath);
-        
-        // write each entry on the new CSV
-        writer.writeNext(newLine);
-        
-        // DEBUG
-        /*
-        for( int i = 0; i < workLine.length - 1; i++){
-          String element = workLine[i];
-          System.out.print("\t" + element);
-        }
-        System.out.println("");
-        */
-        
-      }
       
-      // close the CSV
-      try {
-        writer.close();
-      } catch (IOException ex) {
-        Logger.getLogger(CSV2QR.class.getName()).log(Level.SEVERE, null, ex);
-      }
 
     }
     
